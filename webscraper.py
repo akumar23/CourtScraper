@@ -1,6 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from lxml.html import fromstring 
+from lxml.html import fromstring
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC 
 from webdriver_manager.chrome import ChromeDriverManager
 from itertools import cycle
 from selenium import webdriver
@@ -41,7 +44,7 @@ pageurl = 'https://webapps.sftc.org/ci/CaseInfo.dll?&SessionID=862EC7A358935F750
 api_key = '33888cf71b78f3a196074781246f8c12'
 
 #driver = webdriver.Chrome(ChromeDriverManager().install())
-driver = webdriver.Chrome(executable_path=r'/opt/homebrew/bin/chromedriver')
+driver = webdriver.Chrome(ChromeDriverManager().install())
 driver.get(pageurl)
 
 #requests.get(pageurl)
@@ -64,11 +67,23 @@ while not status:
     if res.json()['status']==0:
         time.sleep(3)
     else:
+        #driver.implicitly_wait(20)
         requ = res.json()['request']
         js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
         driver.execute_script(js)
-        driver.find_element_by_id("recaptchaCallBack").submit() #this line giving errors
+        #driver.find_element("name", "reCAPTCHA").submit() 
+        WebDriverWait(driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
         status = 1
+
+"""
+Need to fix this part by getting the right elements on the webpage to click on
+"""
+if(status == 1):
+    print("STATUS: now we get the dates")
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.LINK_TEXT, "#tabs-3"))).click()
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.LINK_TEXT, "FilingDate"))).click()   
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.LINK_TEXT, " data-month='5'"))).click()     
 
 """
 with open('CaseInfo.dll?', 'r') as dll_file:
@@ -114,4 +129,3 @@ with open('Case Information.html', 'r') as html_file:
                 print(f' Case Title: {caseInfo}\n')
         i+=1
 """
-
