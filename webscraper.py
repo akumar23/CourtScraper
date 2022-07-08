@@ -22,6 +22,15 @@ Attempt to use wget to download html page then bypass the captcha on the page if
 and then scrape data after the bypass of the captcha
 """
 
+def existsElement(id):
+    try:
+        driver.findElement(By.ID, id)
+    except:
+        return False
+    
+    return True
+
+
 api_key = '33888cf71b78f3a196074781246f8c12'
 
 #run = true
@@ -87,32 +96,39 @@ while not status:
         status = 1
 
 
-print("STATUS: now we get the dates")
+print("STATUS: now we input the desired date")
 WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
-#WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.formCol1"))).click()
 
-#need to find the right element for the search button
-time.sleep(20)
-WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
-#WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()='Search ']"))).click()
+dateText = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
+dateText.clear()
+dateText.send_keys('2022-07-01')
 
+#click search button to get court data
+time.sleep(5)
+WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
+
+#gets page source and loops through the court cases on that page and prints the case number and title
 print("STATUS: Getting the case information")
-html = driver.page_source
-time.sleep(2)
-soup = BeautifulSoup(html, 'lxml')
-tags = soup.find_all('td')
 
-i = 0
+while existsElement("pageinate_button next"):
+    time.sleep(20)
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'lxml')
+    tags = soup.find_all('td')
 
-for case in tags:
-    caseInfo = case.text
+    i = 0
+
+    for case in tags:
+        caseInfo = case.text
         
-    if(not caseInfo.isnumeric()):
-        if(i%2 == 0):
-            print(f' Case Number: {caseInfo}')
-        else:
-            print(f' Case Title: {caseInfo}\n')
-        i+=1
+        if(not caseInfo.isnumeric()):
+            if(i%2 == 0):
+                print(f' Case Number: {caseInfo}')
+            else:
+                print(f' Case Title: {caseInfo}\n')
+            i+=1
+
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "pageinate_button next"))).click()
 
 #else:
 #    print("NOT A VALID URL")
