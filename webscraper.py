@@ -28,8 +28,8 @@ api_key = config('API_KEY')
 #   if(validUrl):
 #       run = false
 
-pageurl = 'https://webapps.sftc.org/ci/CaseInfo.dll?&SessionID=862EC7A358935F750140F1B7AE7E5F4F8D0D5DF1'
-siteKey = '6Ldx5AwTAAAAAGrqJtWN13DX1U0_m-ueYEBVixBf'
+pageurl = config('url')
+siteKey = config('site_key')
 
 #code to automate finding the captcha key in the site
 """
