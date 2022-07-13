@@ -9,29 +9,15 @@ from sqlalchemy import false
 from webdriver_manager.chrome import ChromeDriverManager
 from itertools import cycle
 from selenium import webdriver
-import traceback
-import subprocess
-import glob, os
 import time
-import validators 
-import pickle
-
+from decouple import config
 
 """
-Attempt to use wget to download html page then bypass the captcha on the page if there is one
-and then scrape data after the bypass of the captcha
+Program that uses the 2captcha API to bypass the captcha if there is one
+and then scrape the information of court cases that happened on a given date
 """
 
-def existsElement(id):
-    try:
-        driver.findElement(By.ID, id)
-    except:
-        return False
-    
-    return True
-
-
-api_key = '33888cf71b78f3a196074781246f8c12'
+api_key = config('API_KEY')
 
 #run = true
 #while(run):
@@ -67,8 +53,6 @@ driver = webdriver.Chrome(ChromeDriverManager().install())
 
 driver.get(pageurl)
 
-#requests.get(pageurl)
-
 form = {"method": "userrecaptcha",
         "googlekey": siteKey,
         "key": api_key,
@@ -86,13 +70,11 @@ while not status:
     if res.json()['status']==0:
         time.sleep(3)
     else:
-        #driver.implicitly_wait(20)
         requ = res.json()['request']
         js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
         driver.execute_script(js)
-        #driver.find_element("name", "reCAPTCHA").submit() 
-        WebDriverWait(driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+        WebDriverWait(driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
         status = 1
 
 
@@ -108,14 +90,28 @@ time.sleep(5)
 WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
 
 #gets page source and loops through the court cases on that page and prints the case number and title
-print("STATUS: Getting the case information")
+page = 0
+time.sleep(5)
 
-while existsElement("pageinate_button next"):
-    time.sleep(20)
+html = driver.page_source
+soup = BeautifulSoup(html, 'lxml')
+table = soup.find_all('dataTables_info')
+
+list = []
+for i in table:
+    word = i.text
+    if word.isnumeric():
+        list.append(word)
+
+maxCount = list[len(list)-1]
+
+while page <= maxCount/10:
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
-    tags = soup.find_all('td')
-
+    tags = soup.find_all('td')      
+    page += 1
+    print("STATUS: Getting the case information for page {page}")
+    time.sleep(5)
     i = 0
 
     for case in tags:
@@ -128,7 +124,7 @@ while existsElement("pageinate_button next"):
                 print(f' Case Title: {caseInfo}\n')
             i+=1
 
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "pageinate_button next"))).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
 
 #else:
 #    print("NOT A VALID URL")
