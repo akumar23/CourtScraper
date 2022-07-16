@@ -11,12 +11,15 @@ from itertools import cycle
 from selenium import webdriver
 import time
 from decouple import config
+import pandas as pd
+import sqlite3
 
 """
 Program that uses the 2captcha API to bypass the captcha if there is one
 and then scrape the information of court cases that happened on a given date
 """
 
+#create a file named .env with the values inside config()
 api_key = config('API_KEY')
 
 #run = true
@@ -32,22 +35,6 @@ pageurl = config('url')
 siteKey = config('site_key')
 
 #code to automate finding the captcha key in the site
-"""
-with open('CaseInfo.dll?', 'r') as dll_file:
-content = dll_file.read()
-soup = BeautifulSoup(content, 'lxml')
-
-captcha = soup.find_all('div', class_ = 'g-recaptcha')
-
-if(not captcha == []):
-    for key in captcha:
-         #currKey = key.text
-        print(key.text)
-
-    keys = soup.find_all('data-callback')
-    for id in keys:
-        print(id.text)
-"""
 
 driver = webdriver.Chrome(ChromeDriverManager().install())
 
@@ -105,6 +92,8 @@ for i in table:
 
 maxCount = list[len(list)-1]
 
+d = {}
+
 while page <= maxCount/10:
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
@@ -120,11 +109,27 @@ while page <= maxCount/10:
         if(not caseInfo.isnumeric()):
             if(i%2 == 0):
                 print(f' Case Number: {caseInfo}')
+                number = caseInfo
             else:
                 print(f' Case Title: {caseInfo}\n')
+                title = caseInfo
             i+=1
+        d.update(number, title)
 
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
 
 #else:
 #    print("NOT A VALID URL")
+
+conn = sqlite3.connect('courtDB')
+c = conn.cursor()
+
+c.execute('CREATE TABLE IF NOT EXISTS case_info (CaseNumber text, CaseTitle text)')
+conn.commit()
+
+df = pd.DataFrame(d, columns=['CaseNumber', 'CaseTitle'])
+df.to_sql('case_info', conn, if_exists='replace', index=False)
+
+c.execute('''
+SELECT * FROM case_info
+''')
