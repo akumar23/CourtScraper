@@ -51,19 +51,21 @@ request_id = response.json()['request']
 
 url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={request_id}&json=1"
 
-status = 0
-while not status:
-    res = requests.get(url)
-    if res.json()['status']==0:
-        time.sleep(3)
-    else:
-        requ = res.json()['request']
-        js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
-        driver.execute_script(js)
-        WebDriverWait(driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
-        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
-        status = 1
-
+try:
+    status = 0
+    while not status:
+        res = requests.get(url)
+        if res.json()['status']==0:
+            time.sleep(3)
+        else:
+            requ = res.json()['request']
+            js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
+            driver.execute_script(js)
+            WebDriverWait(driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
+            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+            status = 1
+except:
+    print('no CAPTCHA')
 
 print("STATUS: now we input the desired date")
 WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
@@ -82,24 +84,30 @@ time.sleep(5)
 
 html = driver.page_source
 soup = BeautifulSoup(html, 'lxml')
-table = soup.find_all('dataTables_info')
+table = soup.find_all('div')
+
+time.sleep(5)
 
 list = []
+
 for i in table:
     word = i.text
-    if word.isnumeric():
-        list.append(word)
+    txt = word.split(" ")
 
-maxCount = list[len(list)-1]
+    for w in txt:
+        if w.isnumeric():            
+            list.append(w)
+
+pageCount = int(list[len(list)-1])//10
 
 d = {}
 
-while page <= maxCount/10:
+while page <= pageCount:
     html = driver.page_source
     soup = BeautifulSoup(html, 'lxml')
     tags = soup.find_all('td')      
     page += 1
-    print("STATUS: Getting the case information for page {page}")
+    print(f'STATUS: Getting the case information for page {page}')
     time.sleep(5)
     i = 0
 
@@ -108,28 +116,34 @@ while page <= maxCount/10:
         
         if(not caseInfo.isnumeric()):
             if(i%2 == 0):
-                print(f' Case Number: {caseInfo}')
+                #print(f' Case Number: {caseInfo}')
                 number = caseInfo
+                title = " "
             else:
-                print(f' Case Title: {caseInfo}\n')
+                #print(f' Case Title: {caseInfo}\n')
                 title = caseInfo
             i+=1
-        d.update(number, title)
+        d.update({number: title})
 
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
 
 #else:
 #    print("NOT A VALID URL")
-
+"""
 conn = sqlite3.connect('courtDB')
 c = conn.cursor()
 
 c.execute('CREATE TABLE IF NOT EXISTS case_info (CaseNumber text, CaseTitle text)')
 conn.commit()
-
+"""
+print(d)
 df = pd.DataFrame(d, columns=['CaseNumber', 'CaseTitle'])
+print(df)
+
+"""
 df.to_sql('case_info', conn, if_exists='replace', index=False)
 
 c.execute('''
 SELECT * FROM case_info
 ''')
+"""
