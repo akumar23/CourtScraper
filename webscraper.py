@@ -150,6 +150,7 @@ conn.commit()
 """
 
 sf = sfCourtData()
+sf.byPassCaptcha()
 d = sf.getDataAtDate()
 
 for key in d:
