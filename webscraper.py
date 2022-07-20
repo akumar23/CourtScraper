@@ -19,116 +19,128 @@ Program that uses the 2captcha API to bypass the captcha if there is one
 and then scrape the information of court cases that happened on a given date
 """
 
-#create a file named .env with the values inside config()
-api_key = config('API_KEY')
+class sfCourtData:
 
-#run = true
-#while(run):
-#   userUrl = input("Enter a link to the site: ")
+    def __init__(self):
+        self.driver = webdriver.Chrome(ChromeDriverManager().install())
 
-#   validUrl = validators.url(userUrl)
-
-#   if(validUrl):
-#       run = false
-
-pageurl = config('url')
-siteKey = config('site_key')
-
-#code to automate finding the captcha key in the site
-
-driver = webdriver.Chrome(ChromeDriverManager().install())
-
-driver.get(pageurl)
-
-form = {"method": "userrecaptcha",
-        "googlekey": siteKey,
-        "key": api_key,
-        "pageurl": pageurl, 
-        "json": 1 }
-
-response = requests.post('http://2captcha.com/in.php', data=form)
-request_id = response.json()['request']
-
-url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={request_id}&json=1"
-
-try:
-    status = 0
-    while not status:
-        res = requests.get(url)
-        if res.json()['status']==0:
-            time.sleep(3)
-        else:
-            requ = res.json()['request']
-            js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
-            driver.execute_script(js)
-            WebDriverWait(driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
-            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
-            status = 1
-except:
-    print('no CAPTCHA')
-
-print("STATUS: now we input the desired date")
-WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
-
-dateText = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
-dateText.clear()
-dateText.send_keys('2022-07-01')
-
-#click search button to get court data
-time.sleep(5)
-WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
-
-#gets page source and loops through the court cases on that page and prints the case number and title
-page = 0
-time.sleep(5)
-
-html = driver.page_source
-soup = BeautifulSoup(html, 'lxml')
-table = soup.find_all('div')
-
-time.sleep(5)
-
-list = []
-
-for i in table:
-    word = i.text
-    txt = word.split(" ")
-
-    for w in txt:
-        if w.isnumeric():            
-            list.append(w)
-
-pageCount = int(list[len(list)-1])//10
-
-d = {}
-
-while page <= pageCount:
-    html = driver.page_source
-    soup = BeautifulSoup(html, 'lxml')
-    tags = soup.find_all('td')      
-    page += 1
-    print(f'STATUS: Getting the case information for page {page}')
-    time.sleep(5)
-    i = 0
-
-    for case in tags:
-        caseInfo = case.text
+    def byPassCaptcha(self):
         
-        if(not caseInfo.isnumeric()):
-            if(i%2 == 0):
-                #print(f' Case Number: {caseInfo}')
-                number = caseInfo
-                title = " "
-            else:
-                #print(f' Case Title: {caseInfo}\n')
-                title = caseInfo
-            i+=1
-        d.update({number: title})
 
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
+        #create a file named .env with the values inside config()
+        api_key = config('API_KEY')
 
-#else:
-#    print("NOT A VALID URL")
+        #run = true
+        #while(run):
+        #   userUrl = input("Enter a link to the site: ")
+
+        #   validUrl = validators.url(userUrl)
+
+        #   if(validUrl):
+        #       run = false
+
+        pageurl = config('url')
+        siteKey = config('site_key')
+
+        #code to automate finding the captcha key in the site
+
+        #driver = webdriver.Chrome(ChromeDriverManager().install())
+
+        self.driver.get(pageurl)
+
+        form = {"method": "userrecaptcha",
+                "googlekey": siteKey,
+                "key": api_key,
+                "pageurl": pageurl, 
+                "json": 1 }
+
+        response = requests.post('http://2captcha.com/in.php', data=form)
+        request_id = response.json()['request']
+
+        url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={request_id}&json=1"
+
+        try:
+            status = 0
+            while not status:
+                res = requests.get(url)
+                if res.json()['status']==0:
+                    time.sleep(3)
+                else:
+                    requ = res.json()['request']
+                    js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
+                    self.driver.execute_script(js)
+                    WebDriverWait(self.driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
+                    WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+                    status = 1
+        except:
+            print('no CAPTCHA')
+
+    def getDataAtDate(self):
+        print("STATUS: now we input the desired date")
+        WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
+
+        dateText = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
+        dateText.clear()
+        dateText.send_keys('2022-07-01')
+
+        #click search button to get court data
+        time.sleep(5)
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
+
+        #gets page source and loops through the court cases on that page and prints the case number and title
+        page = 0
+        time.sleep(5)
+
+        html = self.driver.page_source
+        soup = BeautifulSoup(html, 'lxml')
+        table = soup.find_all('div')
+
+        time.sleep(5)
+
+        list = []
+
+        for i in table:
+            word = i.text
+            txt = word.split(" ")
+
+            for w in txt:
+                if w.isnumeric():            
+                    list.append(w)
+
+        pageCount = int(list[len(list)-1])//10
+
+        d = {}
+
+        while page <= pageCount:
+            html = self.driver.page_source
+            soup = BeautifulSoup(html, 'lxml')
+            tags = soup.find_all('td')      
+            page += 1
+            print(f'STATUS: Getting the case information for page {page}')
+            time.sleep(5)
+            i = 0
+
+            for case in tags:
+                caseInfo = case.text
+                
+                if(not caseInfo.isnumeric()):
+                    if(i%2 == 0):
+                        #print(f' Case Number: {caseInfo}')
+                        number = caseInfo
+                        title = " "
+                    else:
+                        #print(f' Case Title: {caseInfo}\n')
+                        title = caseInfo
+                    i+=1
+                d.update({number: title})
+
+            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
+        
+        return d
+
+    #else:
+    #    print("NOT A VALID URL")
+    
 """
 conn = sqlite3.connect('courtDB')
 c = conn.cursor()
@@ -136,9 +148,14 @@ c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS case_info (CaseNumber text, CaseTitle text)')
 conn.commit()
 """
-print(d)
-df = pd.DataFrame(d, columns=['CaseNumber', 'CaseTitle'])
-print(df)
+
+sf = sfCourtData()
+d = sf.getDataAtDate()
+
+for key in d:
+    print(key, ':', d[key])
+
+df = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
 
 """
 df.to_sql('case_info', conn, if_exists='replace', index=False)
