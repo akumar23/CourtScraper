@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from sqlalchemy import false 
+from sqlalchemy import column, false 
 from webdriver_manager.chrome import ChromeDriverManager
 from itertools import cycle
 from selenium import webdriver
@@ -26,25 +26,13 @@ class sfCourtData:
 
     def byPassCaptcha(self):
         
-
         #create a file named .env with the values inside config()
         api_key = config('API_KEY')
-
-        #run = true
-        #while(run):
-        #   userUrl = input("Enter a link to the site: ")
-
-        #   validUrl = validators.url(userUrl)
-
-        #   if(validUrl):
-        #       run = false
 
         pageurl = config('url')
         siteKey = config('site_key')
 
         #code to automate finding the captcha key in the site
-
-        #driver = webdriver.Chrome(ChromeDriverManager().install())
 
         self.driver.get(pageurl)
 
@@ -69,8 +57,8 @@ class sfCourtData:
                     requ = res.json()['request']
                     js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
                     self.driver.execute_script(js)
-                    WebDriverWait(self.driver, 20).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
-                    WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+                    WebDriverWait(self.driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
+                    WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
                     status = 1
         except:
             print('no CAPTCHA')
@@ -110,58 +98,68 @@ class sfCourtData:
         pageCount = int(list[len(list)-1])//10
 
         d = {}
+        links = []
 
         while page <= pageCount:
             html = self.driver.page_source
             soup = BeautifulSoup(html, 'lxml')
             tags = soup.find_all('td')      
+            
             page += 1
-            print(f'STATUS: Getting the case information for page {page}')
+            print(f'STATUS: Getting the case information from page {page}')
             time.sleep(5)
+            
             i = 0
+            for a in soup.find_all('a', href=True):
+                if a['href'] != '#':
+                    links.append(a['href'])
 
             for case in tags:
-                caseInfo = case.text
-                
+                caseInfo = case.text               
                 if(not caseInfo.isnumeric()):
                     if(i%2 == 0):
-                        #print(f' Case Number: {caseInfo}')
                         number = caseInfo
                         title = " "
                     else:
-                        #print(f' Case Title: {caseInfo}\n')
                         title = caseInfo
                     i+=1
                 d.update({number: title})
 
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
-        return d
+        return d, links
 
-    #else:
-    #    print("NOT A VALID URL")
     
 """
 conn = sqlite3.connect('courtDB')
 c = conn.cursor()
 
 c.execute('CREATE TABLE IF NOT EXISTS case_info (CaseNumber text, CaseTitle text)')
+c.execute('CREATE TABLE IF NOT EXISTS case_links (CaseLink text)')
 conn.commit()
 """
 
 sf = sfCourtData()
 sf.byPassCaptcha()
-d = sf.getDataAtDate()
+data = sf.getDataAtDate()
+
+d = data[0]
+links = data[1]
+
+print(links)
 
 for key in d:
     print(key, ':', d[key])
 
-df = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
+dfData = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
+dfLinks = pd.DateOffset(links, column=['CaseLink'])
 
 """
-df.to_sql('case_info', conn, if_exists='replace', index=False)
+dfData.to_sql('case_info', conn, if_exists='replace', index=False)
+dfLinks.to_sql('case_links', conn, if_exists='replace', index=False)
 
 c.execute('''
 SELECT * FROM case_info
+SELECT * FROM case_links
 ''')
 """
