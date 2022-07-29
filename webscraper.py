@@ -13,6 +13,7 @@ import time
 from decouple import config
 import pandas as pd
 import sqlite3
+from anticaptchaofficial.recaptchav2proxyon import *
 
 """
 Program that uses the 2captcha API to bypass the captcha if there is one
@@ -33,7 +34,13 @@ class sfCourtData:
         siteKey = config('site_key')
 
         #code to automate finding the captcha key in the site
-
+        
+        #solver = recaptchaV2Proxyon()        
+        #solver.set_verbose(1)
+        #solver.set_key("YOUR_KEY")
+        #solver.set_website_url([pageurl])
+        #solver.set_website_key(siteKey)
+        
         self.driver.get(pageurl)
 
         form = {"method": "userrecaptcha",
@@ -152,7 +159,7 @@ for key in d:
     print(key, ':', d[key])
 
 dfData = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
-dfLinks = pd.DateOffset(links, column=['CaseLink'])
+dfLinks = pd.DateFrame(links, column=['CaseLink'])
 
 """
 dfData.to_sql('case_info', conn, if_exists='replace', index=False)
