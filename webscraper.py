@@ -1,74 +1,53 @@
-import time, requests
-from bs4 import BeautifulSoup
-from lxml.html import fromstring
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from sqlalchemy import column, false 
 from webdriver_manager.chrome import ChromeDriverManager
-from itertools import cycle
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 from selenium import webdriver
-import time
+from bs4 import BeautifulSoup
 from decouple import config
+from pathlib import Path
+import urllib.request
 import pandas as pd
-import sqlite3
-from anticaptchaofficial.recaptchav2proxyon import *
-
-"""
-Program that uses the 2captcha API to bypass the captcha if there is one
-and then scrape the information of court cases that happened on a given date
-"""
+import zipfile
+import time
+import os
 
 class sfCourtData:
 
-    def __init__(self):
-        self.driver = webdriver.Chrome(ChromeDriverManager().install())
-
     def byPassCaptcha(self):
-        
-        #create a file named .env with the values inside config()
+        url = 'https://antcpt.com/anticaptcha-plugin.zip'
+        # download the plugin
+        filehandle, _ = urllib.request.urlretrieve(url)
+        # unzip it
+        with zipfile.ZipFile(filehandle, "r") as f:
+            f.extractall("plugin")
+
         api_key = config('API_KEY')
+        file = Path('./plugin/js/config_ac_api_key.js')
+        file.write_text(file.read_text().replace("antiCapthaPredefinedApiKey = ''", "antiCapthaPredefinedApiKey = '{}'".format(api_key)))
+
+        # zip plugin directory back to plugin.zip
+        zip_file = zipfile.ZipFile('./plugin.zip', 'w', zipfile.ZIP_DEFLATED)
+        for root, dirs, files in os.walk("./plugin"):
+                for file in files:
+                    path = os.path.join(root, file)
+                    zip_file.write(path, arcname=path.replace("./plugin/", ""))
+        zip_file.close()
+
+        options = webdriver.ChromeOptions()
+        options.add_extension('./plugin.zip')
+
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
         pageurl = config('url')
-        siteKey = config('site_key')
-
-        #code to automate finding the captcha key in the site
-        
-        #solver = recaptchaV2Proxyon()        
-        #solver.set_verbose(1)
-        #solver.set_key("YOUR_KEY")
-        #solver.set_website_url([pageurl])
-        #solver.set_website_key(siteKey)
-        
         self.driver.get(pageurl)
 
-        form = {"method": "userrecaptcha",
-                "googlekey": siteKey,
-                "key": api_key,
-                "pageurl": pageurl, 
-                "json": 1 }
+        # wait for "solved" selector to come up
+        webdriver.support.wait.WebDriverWait(self.driver, 120).until(lambda x: x.find_element(By.CSS_SELECTOR, '.antigate_solver.solved'))
+        # press submit button
+        #WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+        print("BYPASSED CAPTCHA!!")
 
-        response = requests.post('http://2captcha.com/in.php', data=form)
-        request_id = response.json()['request']
-
-        url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={request_id}&json=1"
-
-        try:
-            status = 0
-            while not status:
-                res = requests.get(url)
-                if res.json()['status']==0:
-                    time.sleep(3)
-                else:
-                    requ = res.json()['request']
-                    js = f'document.getElementById("g-recaptcha-response").innerHTML="{requ}";'
-                    self.driver.execute_script(js)
-                    WebDriverWait(self.driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
-                    WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
-                    status = 1
-        except:
-            print('no CAPTCHA')
 
     def getDataAtDate(self):
         print("STATUS: now we input the desired date")
@@ -105,7 +84,6 @@ class sfCourtData:
         pageCount = int(list[len(list)-1])//10
 
         d = {}
-        links = []
 
         while page <= pageCount:
             html = self.driver.page_source
@@ -118,8 +96,8 @@ class sfCourtData:
             
             i = 0
             for a in soup.find_all('a', href=True):
-                if a['href'] != '#':
-                    links.append(a['href'])
+                if a['href'] != '#' and "http" in a['href']:
+                    self.links.append(a['href'])
 
             for case in tags:
                 caseInfo = case.text               
@@ -134,7 +112,7 @@ class sfCourtData:
 
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
-        return d, links
+        return d
 
     
 """
@@ -148,18 +126,18 @@ conn.commit()
 
 sf = sfCourtData()
 sf.byPassCaptcha()
+
 data = sf.getDataAtDate()
 
-d = data[0]
-links = data[1]
-
-print(links)
-
-for key in d:
-    print(key, ':', d[key])
+d = data
 
 dfData = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
-dfLinks = pd.DateFrame(links, column=['CaseLink'])
+dfLinks = pd.DataFrame(sf.links, columns=['CaseLink'])
+
+print(dfData)
+
+#dfData.to_csv('caseData.csv', index=False) 
+#dfLinks.to_csv('links.csv', index=False)
 
 """
 dfData.to_sql('case_info', conn, if_exists='replace', index=False)
