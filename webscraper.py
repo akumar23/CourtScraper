@@ -37,35 +37,38 @@ class sfCourtData:
         options = webdriver.ChromeOptions()
         options.add_extension('./plugin.zip')
 
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
         pageurl = config('url')
-        self.driver.get(pageurl)
+        browser.get(pageurl)
 
         # wait for "solved" selector to come up
-        webdriver.support.wait.WebDriverWait(self.driver, 120).until(lambda x: x.find_element(By.CSS_SELECTOR, '.antigate_solver.solved'))
+        WebDriverWait(browser, 120).until(lambda x: x.find_element_by_css_selector('.antigate_solver.solved'))
         # press submit button
-        #WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
+        browser.find_element_by_css_selector('#submitButton').click()
         print("BYPASSED CAPTCHA!!")
 
 
     def getDataAtDate(self):
-        print("STATUS: now we input the desired date")
-        WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
 
-        dateText = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
+        driver = webdriver.Chrome(ChromeDriverManager().install())
+
+        print("STATUS: now we input the desired date")
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
+
+        dateText = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
         dateText.clear()
         dateText.send_keys('2022-07-01')
 
         #click search button to get court data
         time.sleep(5)
-        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "FilingsSearchBtn"))).click()
 
         #gets page source and loops through the court cases on that page and prints the case number and title
         page = 0
         time.sleep(5)
 
-        html = self.driver.page_source
+        html = driver.page_source
         soup = BeautifulSoup(html, 'lxml')
         table = soup.find_all('div')
 
@@ -86,7 +89,7 @@ class sfCourtData:
         d = {}
 
         while page <= pageCount:
-            html = self.driver.page_source
+            html = driver.page_source
             soup = BeautifulSoup(html, 'lxml')
             tags = soup.find_all('td')      
             
@@ -110,7 +113,7 @@ class sfCourtData:
                     i+=1
                 d.update({number: title})
 
-            WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
         return d
 
