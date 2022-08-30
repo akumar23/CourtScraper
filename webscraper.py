@@ -31,12 +31,7 @@ class sfCourtData:
         api_key = config('API_KEY')
 
         pageurl = config('url')
-        siteKey = config('site_key') 
-
-        solver = recaptchaV2Proxyon()        
-        solver.set_verbose(1)
-        solver.set_key("34a9934eaeb3bdee8e6c7f89d32c962e")
-        solver.set_website_key(config('site_key'))  
+        siteKey = config('site_key')  
 
         #code to automate finding the captcha key in the site
 
@@ -53,18 +48,7 @@ class sfCourtData:
 
         url = f"http://2captcha.com/res.php?key={api_key}&action=get&id={request_id}&json=1"
 
-        solver.set_website_url(pageurl)
-
-        g_res = solver.solve_and_return_solution()
-        
-        if g_res != 0:
-            print ("g_res: ", g_res)
-        else:
-            print ("ERROR: ", solver.error_code)
-
-        """
         try:
-
             status = 0
             while not status:
                 res = requests.get(url)
@@ -77,13 +61,8 @@ class sfCourtData:
                     WebDriverWait(self.driver, 5).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"iframe[src^='https://www.google.com/recaptcha/api2/anchor']")))
                     WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-border"))).click()
                     status = 1
-
-            solver.set_website_url(pageurl)
-
-
         except:
             print('no CAPTCHA')
-        """
     
     links = []
 
