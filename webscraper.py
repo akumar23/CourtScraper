@@ -48,7 +48,7 @@ class sfCourtData:
         except:
             print("NO CAPTCHA FOUND")
 
-    links = []
+    linkData = {}
 
     def getDataAtDate(self):
         print("STATUS: now we input the desired date")
@@ -98,9 +98,10 @@ class sfCourtData:
             time.sleep(5)
             
             i = 0
+            link = " "
             for a in soup.find_all('a', href=True):
                 if a['href'] != '#' and "http" in a['href']:
-                    self.links.append(a['href'])
+                    link = a['href']
 
             for case in tags:
                 caseInfo = case.text               
@@ -112,6 +113,8 @@ class sfCourtData:
                         title = caseInfo
                     i+=1
                 d.update({number: title})
+                if link != " ":
+                    self.linkData.update({number: link})
 
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
@@ -130,12 +133,10 @@ conn.commit()
 sf = sfCourtData()
 sf.byPassCaptcha()
 
-data = sf.getDataAtDate()
+court_data = sf.getDataAtDate()
 
-d = data
-
-dfData = pd.DataFrame(d.items(), columns=['CaseNumber', 'CaseTitle'])
-dfLinks = pd.DataFrame(sf.links, columns=['CaseLink'])
+dfData = pd.DataFrame(court_data.items(), columns=['CaseNumber', 'CaseTitle'])
+dfLinks = pd.DataFrame(sf.linkData.items(), columns=['CaseNumber', 'CaseLink'])
 
 print(dfData)
 print(dfLinks)
