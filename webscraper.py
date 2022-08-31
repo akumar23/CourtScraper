@@ -3,6 +3,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from anticaptchaofficial.recaptchav2proxyless import *
 from selenium.webdriver.common.by import By
+from datetime import datetime, timedelta
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from decouple import config
@@ -16,7 +17,7 @@ import os
 class sfCourtData:
 
     def __init__(self):
-        self.api_key = config('API_KEY')
+        api_key = config('API_KEY')
         url = 'https://antcpt.com/anticaptcha-plugin.zip'
         filehandle, _ = urllib.request.urlretrieve(url)
 
@@ -24,7 +25,7 @@ class sfCourtData:
             f.extractall("plugin")
 
         file = Path('./plugin/js/config_ac_api_key.js')
-        file.write_text(file.read_text().replace("antiCapthaPredefinedApiKey = ''", "antiCapthaPredefinedApiKey = '{}'".format(self.api_key)))
+        file.write_text(file.read_text().replace("antiCapthaPredefinedApiKey = ''", "antiCapthaPredefinedApiKey = '{}'".format(api_key)))
 
         zip_file = zipfile.ZipFile('./plugin.zip', 'w', zipfile.ZIP_DEFLATED)
         for root, dirs, files in os.walk("./plugin"):
@@ -39,11 +40,10 @@ class sfCourtData:
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
     def byPassCaptcha(self):
-        #api_key = config('API_KEY')
         try:
             pageurl = config('url')
             self.driver.get(pageurl)
-            time.sleep(120)
+            time.sleep(50)
             print("SOLVED!")
         except:
             print("NO CAPTCHA FOUND")
@@ -51,13 +51,14 @@ class sfCourtData:
     links = []
 
     def getDataAtDate(self):
-
         print("STATUS: now we input the desired date")
         WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
 
         dateText = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.ID, "FilingDate")))
         dateText.clear()
-        dateText.send_keys('2022-07-01')
+
+        #get yesterday's date
+        dateText.send_keys((datetime.now() - timedelta(1)).strftime('%Y-%m-%d'))
 
         #click search button to get court data
         time.sleep(5)
