@@ -4,15 +4,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from anticaptchaofficial.recaptchav2proxyless import *
 from selenium.webdriver.common.by import By
 from datetime import datetime, timedelta
-from pymongo import MongoClient
 from selenium import webdriver
+from pymongo import MongoClient
 from bs4 import BeautifulSoup
 from decouple import config
-from pathlib import Path
 from pprint import pprint
+from pathlib import Path
 import urllib.request
 import pandas as pd
-import zipfile
+import zipfile 
 import time
 import os
 
@@ -53,7 +53,7 @@ class sfCourt:
 
     linkData = {}
 
-    def getDataAtDate(self):
+    def getDataAtDate(self, date):
         print("STATUS: now we input the desired date")
         WebDriverWait(self.driver, 20).until(EC.element_to_be_clickable((By.ID, "ui-id-3"))).click()
 
@@ -61,7 +61,7 @@ class sfCourt:
         dateText.clear()
 
         #get yesterday's date
-        dateText.send_keys((datetime.now() - timedelta(1)).strftime('%Y-%m-%d'))
+        dateText.send_keys(date.strftime('%Y-%m-%d'))
 
         #click search button to get court data
         time.sleep(5)
@@ -122,3 +122,10 @@ class sfCourt:
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
         return d
+
+"""
+# Code below for testing mongodb before making it a function
+client = MongoClient("mongodb+srv://aryan:asdf1234@cluster0.xmaa1l2.mongodb.net/?retryWrites=true&w=majority")
+pprint(client.server_info())
+db = client.sfData 
+"""
