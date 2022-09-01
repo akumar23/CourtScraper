@@ -5,6 +5,9 @@ import dash
 from os.path import exists
 from dash import html
 from dash import dcc
+import streamlit as st
+import numpy as np
+
 
 if not exists('caseData.csv') and not exists('links.csv'):
     san_fran = courtscraper.sfCourt()
@@ -17,35 +20,13 @@ if not exists('caseData.csv') and not exists('links.csv'):
 
     dfData.to_csv('caseData.csv', index=False) 
     dfLinks.to_csv('links.csv', index=False)
+    san_fran.pushToDB()
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
- 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
- 
-colors = {
-    'background': '#F0F8FF',
-    'text': '#00008B'
-}
+st.title('Court Data')
+st.header('San Francisco')
 
 df = pd.read_csv('caseData.csv')
 link = pd.read_csv('links.csv') 
 
-fig = px.scatter(df, x='CaseNumber', y='CaseTitle')
-fig.update_traces(mode='markers+lines')
- 
-app.layout = html.Div(children=[
-    html.H1(children='San Francisco Court Data'),
- 
-    html.Div(children='''
-        Court Data: San Francisco
-    '''),
- 
-    dcc.Graph(
-        id='example-graph',
-        figure=fig
-    )
-])
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
+st.dataframe(df)
