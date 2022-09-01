@@ -29,9 +29,9 @@ def getData(date):
 st.title('Court Data')
 st.header('San Francisco')
 
-select_date = st.date_input('Click Here to Select Date', datetime.date.today() + datetime.timedelta(1))
+select_date = st.date_input('Click Here to Select Date', datetime.date.today())
 
-if select_date != datetime.date.today() + datetime.timedelta(1):
+if select_date != datetime.date.today():
     getData(select_date)
 
     df = pd.read_csv(f'caseData{select_date}.csv')
@@ -39,3 +39,7 @@ if select_date != datetime.date.today() + datetime.timedelta(1):
 
     st.dataframe(df)
     st.dataframe(link)
+else:
+    st.markdown("""
+    No data for today
+    """)

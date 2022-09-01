@@ -125,7 +125,8 @@ class sfCourt:
 
 """
 # Code below for testing mongodb before making it a function
-client = MongoClient("mongodb+srv://aryan:asdf1234@cluster0.xmaa1l2.mongodb.net/?retryWrites=true&w=majority")
+mongo_uri = config('MONGO_URI')
+client = MongoClient(mong_uri)
 pprint(client.server_info())
 db = client.sfData 
 """
