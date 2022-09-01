@@ -8,3 +8,6 @@ This allows for all the information of court cases for each day to be in one pla
 
 dasboard.py acts as the frontend component of courtscraper. It gets data in the form of csv files and makes a graph 
 using those files and displays that to the user. 
+
+
+![alt text](https://github.com/akumar23/CourtScraper/blob/main/dashboard_image.png)
