@@ -30,3 +30,4 @@ df = pd.read_csv('caseData.csv')
 link = pd.read_csv('links.csv') 
 
 st.dataframe(df)
+st.dataframe(link)
