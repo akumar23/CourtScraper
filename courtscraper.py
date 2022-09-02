@@ -38,6 +38,7 @@ class sfCourt:
         zip_file.close()
 
         options = webdriver.ChromeOptions()
+        #options.add_argument('--headless')
         options.add_extension('./plugin.zip')
 
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
@@ -121,6 +122,7 @@ class sfCourt:
 
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
+        self.driver.quit()
         return d
 
 """
