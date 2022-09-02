@@ -31,7 +31,7 @@ st.header('San Francisco')
 
 select_date = st.date_input('Click Here to Select Date', datetime.date.today())
 
-if select_date != datetime.date.today() and select_date.weekday() < 5:
+if select_date < datetime.date.today() and select_date.weekday() < 5:
     getData(select_date)
 
     df = pd.read_csv(f'caseData{select_date}.csv')
