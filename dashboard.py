@@ -1,14 +1,8 @@
 import datetime
-from select import select
 import courtscraper
 import pandas as pd
-import plotly.express as px
-import dash
 from os.path import exists
-from dash import html
-from dash import dcc
 import streamlit as st
-import numpy as np
 
 
 def getData(date):

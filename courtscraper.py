@@ -1,3 +1,4 @@
+from lib2to3.pgen2 import driver
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
@@ -38,8 +39,8 @@ class sfCourt:
         zip_file.close()
 
         options = webdriver.ChromeOptions()
-        #options.add_argument('--headless')
         options.add_extension('./plugin.zip')
+        #options.add_argument('--headless')
 
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
@@ -47,7 +48,9 @@ class sfCourt:
         try:
             pageurl = config('url')
             self.driver.get(pageurl)
-            time.sleep(50)
+            #time.sleep(50)
+            while not driver.find_element_by_id("ui-id-3").is_displayed():
+                print("SOLVING...")
             print("SOLVED!")
         except:
             print("NO CAPTCHA FOUND")
@@ -123,6 +126,7 @@ class sfCourt:
             WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.ID, "example_next"))).click()
         
         self.driver.quit()
+        print('SUCCESS: FOUND ALL THE DATA')
         return d
 
 """
