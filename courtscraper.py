@@ -16,7 +16,7 @@ import pandas as pd
 import zipfile 
 import time
 import os
-
+import csv
 
 class sfCourt:
 
@@ -129,10 +129,20 @@ class sfCourt:
         print('SUCCESS: FOUND ALL THE DATA')
         return d
 
-"""
+
 # Code below for testing mongodb before making it a function
 mongo_uri = config('MONGO_URI')
-client = MongoClient(mong_uri)
+client = MongoClient(mongo_uri)
 pprint(client.server_info())
 db = client.sfData 
-"""
+
+header = ['CaseNumber', 'CaseTitle']
+csvfile = open('caseData2022-08-31.csv', 'r')
+reader = csv.DictReader(csvfile)
+
+for each in reader:
+    row = {}
+    for field in header:
+        row[field] = each[field]
+    print("INSERTING TO DB: ", row)
+    db.segment.insert(row)
