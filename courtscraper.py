@@ -48,9 +48,7 @@ class sfCourt:
         try:
             pageurl = config('url')
             self.driver.get(pageurl)
-            #time.sleep(50)
-            while not driver.find_element_by_id("ui-id-3").is_displayed():
-                print("SOLVING...")
+            time.sleep(20)
             print("SOLVED!")
         except:
             print("NO CAPTCHA FOUND")
@@ -129,20 +127,15 @@ class sfCourt:
         print('SUCCESS: FOUND ALL THE DATA')
         return d
 
+    def insertToDB(self, df):
+        mongo_uri = config('MONGO_URI')
+        client = MongoClient(mongo_uri)
 
-# Code below for testing mongodb before making it a function
-mongo_uri = config('MONGO_URI')
-client = MongoClient(mongo_uri)
-pprint(client.server_info())
-db = client.sfData 
+        db = client["sfData"] 
+        pprint(db)
 
-header = ['CaseNumber', 'CaseTitle']
-csvfile = open('caseData2022-08-31.csv', 'r')
-reader = csv.DictReader(csvfile)
+        #df = pd.read_csv(csv)
 
-for each in reader:
-    row = {}
-    for field in header:
-        row[field] = each[field]
-    print("INSERTING TO DB: ", row)
-    db.segment.insert(row)
+        data = df.to_dict(orient="records")
+        db.SanFran.insert_many(data)
+
