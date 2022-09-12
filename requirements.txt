@@ -1,6 +1,6 @@
 streamlit
 pandas
-selenium.webdriver.common.by
+selenium.webdriver
 webdriver_manager.chrome
 lib2to3.pgen2
 bs4
