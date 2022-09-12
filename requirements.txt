@@ -1,0 +1,11 @@
+streamlit
+pandas
+selenium.webdriver.common.by
+webdriver_manager.chrome
+lib2to3.pgen2
+bs4
+decouple
+pprint
+pathlib
+pandas
+anticaptchaofficial.recaptchav2proxyless
