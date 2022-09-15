@@ -15,10 +15,9 @@ def getData(date):
         dfData = pd.DataFrame(court_data.items(), columns=['CaseNumber', 'CaseTitle'])
         dfLinks = pd.DataFrame(san_fran.linkData.items(), columns=['CaseNumber', 'CaseLink'])
 
-        dfData.to_csv(f'caseData{date}.csv', index=False) 
+        san_fran.insertToDB(dfData, date) 
+        dfData.to_csv(f'caseData{date}.csv', index=False)
         dfLinks.to_csv(f'links{date}.csv', index=False)
-        #san_fran.pushToDB()
-
 
 st.title('Court Data')
 st.header('San Francisco')

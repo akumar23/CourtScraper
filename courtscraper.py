@@ -127,7 +127,7 @@ class sfCourt:
         print('SUCCESS: FOUND ALL THE DATA')
         return d
 
-    def insertToDB(self, df):
+    def insertToDB(self, df, date):
         mongo_uri = config('MONGO_URI')
         client = MongoClient(mongo_uri)
 
@@ -137,5 +137,5 @@ class sfCourt:
         #df = pd.read_csv(csv)
 
         data = df.to_dict(orient="records")
-        db.SanFran.insert_many(data)
+        db.date.insert_many(data)
 
